@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atzhang.crowdfounding.dao.UserMapper">
+    <delete id="batchDelete">
+        delete from user
+        where id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+
+    </delete>
+    <update id="updateUser" parameterType="com.atzhang.crowdfounding.beans.User">
+        update user
+        <set>
+            <if test="username!=null">
+                username=#{username},
+            </if>
+            <if test="age!=null ">
+                age=#{age},
+            </if>
+            <if test="email!=null">
+                email=#{email},
+            </if>
+            <if test="phonenumber!=null">
+                phonenumber=#{phonenumber},
+            </if>
+            <if test="password!=null">
+                password=#{password}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <select id="findUserLike" resultType="com.atzhang.crowdfounding.beans.User">
+        select * from user where loginId like concat('%',#{keyword},'%')
+    </select>
+    <!--用户已经分配的角色-->
+    <select id="getAllReadyRoles" resultType="com.atzhang.crowdfounding.beans.Role">
+        select * from role where id in (select role_id from user_role where user_id=#{id})
+    </select>
+    <!--用户未分配的角色-->
+    <select id="getUnHaveRoles" resultType="com.atzhang.crowdfounding.beans.Role">
+        select * from role where id not in (select role_id from user_role where user_id=#{id})
+    </select>
+    <!--用户分配角色-->
+    <insert id="AssignRole" parameterType="java.util.Map" >
+      INSERT  INTO  user_role(user_id,role_id)
+      VALUES
+        <foreach collection="unassignroleids" item="roleid" separator="," >
+            ( #{id}, #{roleid})
+        </foreach>
+    </insert>
+    <!--用户取消分配角色-->
+    <delete id="UnassignRole" parameterType="java.util.Map">
+        delete from user_role
+        where role_id in
+        <foreach collection="assignroleids" item="roleid" open="(" close=")" separator=",">
+            #{roleid}
+        </foreach>
+    </delete>
+    <insert id="add" useGeneratedKeys="true" keyProperty="id" parameterType="com.atzhang.crowdfounding.beans.User">
+         insert into user(username,age,loginId,password,email,phonenumber)
+          values(#{username},#{age},#{loginId},#{password},#{email},#{phonenumber})
+    </insert>
+</mapper>

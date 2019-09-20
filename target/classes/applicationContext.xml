@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	<!-- 配置要扫描的包 -->
+	<context:component-scan base-package="com.atzhang.crowdfounding">
+		<!--过滤掉包下描的Controller-->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"></context:exclude-filter>
+	</context:component-scan>
+	<!-- 引入外部的属性文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="driverClass" value="${jdbc.driverclass}"></property>
+		<property name="jdbcUrl" value="${jdbc.url}"></property>
+	</bean>
+	<!-- 整合mybatis -->
+	<bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="mapperLocations" value="classpath:mapper/*Mapper.xml"></property>
+	</bean>
+	<!--通用mapper -->
+	<bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="zhang.ssm.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+		<property name="properties">
+			<value>
+				mappers=tk.mybatis.mapper.common.Mapper
+			</value>
+		</property>
+	</bean>
+	<mybatis-spring:scan base-package="com.atzhang.crowdfounding.dao" />
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactoryBean"></constructor-arg>
+		<constructor-arg name="executorType" value="BATCH"></constructor-arg>
+	</bean>
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!-- 配置事务的属性 -->
+	<tx:advice id="txadvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="find*" read-only="true"></tx:method>
+			<tx:method name="getFindNewsDetails" read-only="false"></tx:method>
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut expression="execution(* com.atzhang.crowdfounding.service.*.*(..))" id="pointcut" />
+		<aop:advisor advice-ref="txadvice" pointcut-ref="pointcut" />
+	</aop:config>
+
+</beans>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atzhang.crowdfounding.dao.RoleMapper">
+    <delete id="batchdelete">
+        delete from role
+        where id in
+        <foreach collection="list" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <update id="updateRole" parameterType="com.atzhang.crowdfounding.beans.Role">
+        update role
+        <set>
+            <if test="rolename!=null">
+                rolename=#{rolename},
+            </if>
+            <if test="roledesc!=null ">
+                roledesc=#{roledesc},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <select id="getAllLike" resultType="com.atzhang.crowdfounding.beans.Role">
+         select * from role where rolename like concat('%',#{keyword},'%')
+    </select>
+    <delete id="batchDeleteUserRole">
+        delete from user_role where role_id in
+        <foreach collection="list" item="roleid" open="(" close=")" separator=",">
+            #{roleid}
+        </foreach>
+
+    </delete>
+    <insert id="InsertRolePermission" >
+        INSERT  into role_permission(role_id,permission_id)
+        values
+        <foreach collection="permissionids" item="perid" separator=",">
+            (#{roleid},#{perid})
+        </foreach>
+    </insert>
+    <delete id="batchDeleteRolePermission">
+        delete from role_permission where role_id in
+        <foreach collection="list" item="roleid" open="(" close=")" separator=",">
+            #{roleid}
+        </foreach>
+    </delete>
+
+</mapper>
